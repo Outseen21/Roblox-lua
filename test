@@ -355,32 +355,58 @@ targetPartDropdown.MouseButton1Click:Connect(function()
     dropdown.Visible = not dropdown.Visible
 end)
 
--- ESP functionality
+-- ESP functionality using BoxHandleAdornment and Nametags
 local espEnabled = false
 local espInstances = {}
 
 local function createESP(character)
     if character and character ~= LocalPlayer.Character then
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local head = character:FindFirstChild("Head")
         if humanoidRootPart and not character:FindFirstChild("PlayerESP") then
-            local esp = Instance.new("Highlight")
-            esp.Name = "PlayerESP"
-            esp.Adornee = character
-            esp.FillColor = Color3.fromRGB(255, 0, 0)
-            esp.FillTransparency = 0.5
-            esp.OutlineColor = Color3.fromRGB(255, 255, 255)
-            esp.OutlineTransparency = 0
-            esp.Parent = character
-            table.insert(espInstances, esp)
+            local box = Instance.new("BoxHandleAdornment")
+            box.Name = "PlayerESP"
+            box.Adornee = humanoidRootPart
+            box.AlwaysOnTop = true
+            box.ZIndex = 5
+            box.Size = Vector3.new(4, 6, 4)
+            box.Transparency = 0.5
+            box.Color3 = Color3.fromRGB(255, 0, 0)
+            box.Parent = humanoidRootPart
+            table.insert(espInstances, box)
+            
+            if head then
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = "PlayerNametag"
+                billboardGui.Adornee = head
+                billboardGui.Size = UDim2.new(0, 100, 0, 100)
+                billboardGui.StudsOffset = Vector3.new(0, 2, 0)
+                billboardGui.AlwaysOnTop = true
+
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.Text = character.Name
+                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLabel.Font = Enum.Font.SourceSansBold
+                nameLabel.TextSize = 14
+                nameLabel.Parent = billboardGui
+
+                billboardGui.Parent = head
+            end
         end
     end
 end
 
 local function removeESP(character)
     if character and character ~= LocalPlayer.Character then
-        local esp = character:FindFirstChild("PlayerESP")
+        local esp = character:FindFirstChild("HumanoidRootPart"):FindFirstChild("PlayerESP")
         if esp then
             esp:Destroy()
+        end
+        local nametag = character:FindFirstChild("Head"):FindFirstChild("PlayerNametag")
+        if nametag then
+            nametag:Destroy()
         end
     end
 end
