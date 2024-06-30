@@ -355,52 +355,6 @@ targetPartDropdown.MouseButton1Click:Connect(function()
     dropdown.Visible = not dropdown.Visible
 end)
 
--- Create the close button with rounded corners
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 100, 0, 40)
-closeButton.Position = UDim2.new(1, -110, 1, -40)
-closeButton.AnchorPoint = Vector2.new(1, 1)
-closeButton.BackgroundColor3 = Color3.fromRGB(220, 20, 60) -- Crimson
-closeButton.Text = "Close"
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.Font = Enum.Font.SourceSansBold
-closeButton.TextSize = 22
-closeButton.Parent = screenGui -- Add the close button outside the main frame
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 10)
-closeCorner.Parent = closeButton
-
--- Create the open button (initially visible) with rounded corners
-local openButton = Instance.new("TextButton")
-openButton.Size = UDim2.new(0, 100, 0, 40)
-openButton.Position = UDim2.new(0, 10, 1, -40)
-openButton.AnchorPoint = Vector2.new(0, 1)
-openButton.BackgroundColor3 = Color3.fromRGB(60, 179, 113) -- Medium Sea Green
-openButton.Text = "Open"
-openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-openButton.Font = Enum.Font.SourceSansBold
-openButton.TextSize = 22
-openButton.Parent = screenGui
-
-local openCorner = Instance.new("UICorner")
-openCorner.CornerRadius = UDim.new(0, 10)
-openCorner.Parent = openButton
-
--- Close button functionality
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-    openButton.Visible = true
-    closeButton.Visible = false
-end)
-
--- Open button functionality
-openButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = true
-    openButton.Visible = false
-    closeButton.Visible = true
-end)
-
 -- ESP functionality
 local espEnabled = false
 
@@ -726,3 +680,10 @@ end)
 -- Initial setup
 showSection(mainSection)
 updateESP()
+
+-- Insert key to toggle GUI visibility
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+end)
