@@ -357,6 +357,7 @@ end)
 
 -- ESP functionality
 local espEnabled = false
+local espInstances = {}
 
 local function createESP(character)
     if character and character ~= LocalPlayer.Character then
@@ -365,7 +366,12 @@ local function createESP(character)
             local esp = Instance.new("Highlight")
             esp.Name = "PlayerESP"
             esp.Adornee = character
+            esp.FillColor = Color3.fromRGB(255, 0, 0)
+            esp.FillTransparency = 0.5
+            esp.OutlineColor = Color3.fromRGB(255, 255, 255)
+            esp.OutlineTransparency = 0
             esp.Parent = character
+            table.insert(espInstances, esp)
         end
     end
 end
@@ -380,6 +386,13 @@ local function removeESP(character)
 end
 
 local function updateESP()
+    for _, esp in ipairs(espInstances) do
+        if esp and esp.Parent then
+            esp:Destroy()
+        end
+    end
+    espInstances = {}
+
     for _, player in ipairs(Players:GetPlayers()) do
         local character = player.Character
         if character then
