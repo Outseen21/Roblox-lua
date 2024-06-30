@@ -1,0 +1,728 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+-- Create the main ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomGui"
+screenGui.ResetOnSpawn = false -- Ensure GUI persists on respawn
+screenGui.Parent = PlayerGui
+
+-- Create the main frame with rounded corners and a gradient background
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 600, 0, 450) -- Increased width to 600
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -225)
+mainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 15)
+uiCorner.Parent = mainFrame
+
+local uiGradient = Instance.new("UIGradient")
+uiGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(85, 170, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 85, 170))
+}
+uiGradient.Rotation = 45
+uiGradient.Parent = mainFrame
+
+-- Create a top bar for dragging with a gradient background
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+topBar.BorderSizePixel = 0
+topBar.Parent = mainFrame
+
+local topBarGradient = Instance.new("UIGradient")
+topBarGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 85, 170)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(85, 170, 255))
+}
+topBarGradient.Parent = topBar
+
+local topBarLabel = Instance.new("TextLabel")
+topBarLabel.Size = UDim2.new(1, 0, 1, 0)
+topBarLabel.BackgroundTransparency = 1
+topBarLabel.Text = "Custom GUI"
+topBarLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+topBarLabel.Font = Enum.Font.SourceSansBold
+topBarLabel.TextSize = 24
+topBarLabel.Parent = topBar
+
+local uiCornerTopBar = Instance.new("UICorner")
+uiCornerTopBar.CornerRadius = UDim.new(0, 15)
+uiCornerTopBar.Parent = topBar
+
+-- Function to enable dragging of the main frame
+local dragging = false
+local dragInput, mousePos, framePos
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+topBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        mainFrame.Position = UDim2.new(
+            framePos.X.Scale,
+            framePos.X.Offset + delta.X,
+            framePos.Y.Scale,
+            framePos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Create the sidebar frame with rounded corners
+local sidebarFrame = Instance.new("Frame")
+sidebarFrame.Size = UDim2.new(0, 150, 1, -40)
+sidebarFrame.Position = UDim2.new(0, 0, 0, 40)
+sidebarFrame.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+sidebarFrame.BorderSizePixel = 0
+sidebarFrame.Parent = mainFrame
+
+local sidebarCorner = Instance.new("UICorner")
+sidebarCorner.CornerRadius = UDim.new(0, 15)
+sidebarCorner.Parent = sidebarFrame
+
+-- Create a UIListLayout for the sidebar
+local sidebarLayout = Instance.new("UIListLayout")
+sidebarLayout.Parent = sidebarFrame
+sidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Create the main content frame with rounded corners
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -150, 1, -40)
+contentFrame.Position = UDim2.new(0, 150, 0, 40)
+contentFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+contentFrame.BorderSizePixel = 0
+contentFrame.Parent = mainFrame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 15)
+contentCorner.Parent = contentFrame
+
+-- Function to create a section frame with rounded corners
+local function createSection(name)
+    local frame = Instance.new("Frame")
+    frame.Name = name .. "Frame"
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    frame.BorderSizePixel = 0
+    frame.Visible = false
+    frame.Parent = contentFrame
+    
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(0, 15)
+    uiCorner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -20, 0, 40)
+    label.Position = UDim2.new(0, 10, 0, 10)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(50, 50, 50)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 22
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    return frame
+end
+
+-- Create section frames
+local mainSection = createSection("Main")
+local playerSection = createSection("Player")
+local settingsSection = createSection("Settings")
+local carSection = createSection("Car")
+settingsSection.Visible = true  -- Show settings by default
+
+-- Function to show a specific section and hide others
+local function showSection(section)
+    for _, frame in pairs(contentFrame:GetChildren()) do
+        if frame:IsA("Frame") then
+            frame.Visible = false
+        end
+    end
+    section.Visible = true
+end
+
+-- Create colorful sidebar buttons and connect them to the sections
+local sections = {
+    {name = "Main", frame = mainSection},
+    {name = "Player", frame = playerSection},
+    {name = "Settings", frame = settingsSection},
+    {name = "Car", frame = carSection}
+}
+
+local buttonColor = Color3.fromRGB(100, 149, 237) -- Consistent color for section buttons
+
+for _, section in ipairs(sections) do
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 50)
+    button.BackgroundColor3 = buttonColor
+    button.Text = section.name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 22
+    button.Parent = sidebarFrame
+
+    -- Add padding to the buttons
+    local padding = Instance.new("UIPadding")
+    padding.PaddingTop = UDim.new(0, 5)
+    padding.PaddingBottom = UDim.new(0, 5)
+    padding.Parent = button
+
+    -- Connect the button to show the corresponding section
+    button.MouseButton1Click:Connect(function()
+        showSection(section.frame)
+    end)
+end
+
+-- Create the toggle button for ESP inside mainSection with rounded corners
+local toggleButtonESP = Instance.new("TextButton")
+toggleButtonESP.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonESP.Position = UDim2.new(0, 10, 0, 70)
+toggleButtonESP.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonESP.Text = "Enable ESP"
+toggleButtonESP.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonESP.Font = Enum.Font.SourceSansBold
+toggleButtonESP.TextSize = 22
+toggleButtonESP.Parent = mainSection
+
+local espCorner = Instance.new("UICorner")
+espCorner.CornerRadius = UDim.new(0, 10)
+espCorner.Parent = toggleButtonESP
+
+-- Create the toggle button for Aimlock inside mainSection with rounded corners
+local toggleButtonAimlock = Instance.new("TextButton")
+toggleButtonAimlock.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonAimlock.Position = UDim2.new(0, 10, 0, 120)
+toggleButtonAimlock.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonAimlock.Text = "Enable Aimlock"
+toggleButtonAimlock.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonAimlock.Font = Enum.Font.SourceSansBold
+toggleButtonAimlock.TextSize = 22
+toggleButtonAimlock.Parent = mainSection
+
+local aimlockCorner = Instance.new("UICorner")
+aimlockCorner.CornerRadius = UDim.new(0, 10)
+aimlockCorner.Parent = toggleButtonAimlock
+
+-- Create the toggle button for FOV visibility inside mainSection with rounded corners
+local toggleButtonFOV = Instance.new("TextButton")
+toggleButtonFOV.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonFOV.Position = UDim2.new(0, 10, 0, 170)
+toggleButtonFOV.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonFOV.Text = "Enable FOV"
+toggleButtonFOV.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonFOV.Font = Enum.Font.SourceSansBold
+toggleButtonFOV.TextSize = 22
+toggleButtonFOV.Parent = mainSection
+
+local fovCorner = Instance.new("UICorner")
+fovCorner.CornerRadius = UDim.new(0, 10)
+fovCorner.Parent = toggleButtonFOV
+
+-- Create FOV size input inside mainSection with rounded corners
+local fovSizeLabel = Instance.new("TextLabel")
+fovSizeLabel.Size = UDim2.new(1, -20, 0, 35)
+fovSizeLabel.Position = UDim2.new(0, 10, 0, 220)
+fovSizeLabel.BackgroundTransparency = 1
+fovSizeLabel.Text = "Set FOV Size"
+fovSizeLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
+fovSizeLabel.Font = Enum.Font.SourceSansBold
+fovSizeLabel.TextSize = 22
+fovSizeLabel.TextXAlignment = Enum.TextXAlignment.Left
+fovSizeLabel.Parent = mainSection
+
+local fovSizeInput = Instance.new("TextBox")
+fovSizeInput.Size = UDim2.new(0, 170, 0, 40)
+fovSizeInput.Position = UDim2.new(0, 10, 0, 265)
+fovSizeInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+fovSizeInput.Text = "200"
+fovSizeInput.TextColor3 = Color3.fromRGB(50, 50, 50)
+fovSizeInput.Font = Enum.Font.SourceSansBold
+fovSizeInput.TextSize = 22
+fovSizeInput.Parent = mainSection
+
+local fovInputCorner = Instance.new("UICorner")
+fovInputCorner.CornerRadius = UDim.new(0, 10)
+fovInputCorner.Parent = fovSizeInput
+
+local setFovSizeButton = Instance.new("TextButton")
+setFovSizeButton.Size = UDim2.new(0, 170, 0, 40)
+setFovSizeButton.Position = UDim2.new(0, 190, 0, 265)
+setFovSizeButton.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+setFovSizeButton.Text = "Set FOV Size"
+setFovSizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+setFovSizeButton.Font = Enum.Font.SourceSansBold
+setFovSizeButton.TextSize = 22
+setFovSizeButton.Parent = mainSection
+
+local setFovCorner = Instance.new("UICorner")
+setFovCorner.CornerRadius = UDim.new(0, 10)
+setFovCorner.Parent = setFovSizeButton
+
+-- Create target part selection dropdown inside mainSection
+local targetPartLabel = Instance.new("TextLabel")
+targetPartLabel.Size = UDim2.new(1, -20, 0, 35)
+targetPartLabel.Position = UDim2.new(0, 10, 0, 320)
+targetPartLabel.BackgroundTransparency = 1
+targetPartLabel.Text = "Select Target Part"
+targetPartLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
+targetPartLabel.Font = Enum.Font.SourceSansBold
+targetPartLabel.TextSize = 22
+targetPartLabel.TextXAlignment = Enum.TextXAlignment.Left
+targetPartLabel.Parent = mainSection
+
+local targetPartDropdown = Instance.new("TextButton")
+targetPartDropdown.Size = UDim2.new(0, 170, 0, 40)
+targetPartDropdown.Position = UDim2.new(0, 10, 0, 365)
+targetPartDropdown.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+targetPartDropdown.Text = "Head"
+targetPartDropdown.TextColor3 = Color3.fromRGB(50, 50, 50)
+targetPartDropdown.Font = Enum.Font.SourceSansBold
+targetPartDropdown.TextSize = 22
+targetPartDropdown.Parent = mainSection
+
+local dropdownCorner = Instance.new("UICorner")
+dropdownCorner.CornerRadius = UDim.new(0, 10)
+dropdownCorner.Parent = targetPartDropdown
+
+local targetParts = {"Head", "Torso"}
+
+local function createDropdown()
+    local dropdown = Instance.new("Frame")
+    dropdown.Size = UDim2.new(0, 170, 0, #targetParts * 40)
+    dropdown.Position = UDim2.new(0, 10, 0, 410)
+    dropdown.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+    dropdown.Visible = false
+    dropdown.Parent = mainSection
+
+    local dropdownCorner = Instance.new("UICorner")
+    dropdownCorner.CornerRadius = UDim.new(0, 10)
+    dropdownCorner.Parent = dropdown
+
+    for i, part in ipairs(targetParts) do
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(1, 0, 0, 40)
+        button.Position = UDim2.new(0, 0, 0, (i-1) * 40)
+        button.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        button.Text = part
+        button.TextColor3 = Color3.fromRGB(50, 50, 50)
+        button.Font = Enum.Font.SourceSansBold
+        button.TextSize = 22
+        button.Parent = dropdown
+
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 10)
+        buttonCorner.Parent = button
+
+        button.MouseButton1Click:Connect(function()
+            targetPartDropdown.Text = part
+            dropdown.Visible = false
+        end)
+    end
+
+    return dropdown
+end
+
+local dropdown = createDropdown()
+
+targetPartDropdown.MouseButton1Click:Connect(function()
+    dropdown.Visible = not dropdown.Visible
+end)
+
+-- Create the close button with rounded corners
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 100, 0, 40)
+closeButton.Position = UDim2.new(1, -110, 1, -40)
+closeButton.AnchorPoint = Vector2.new(1, 1)
+closeButton.BackgroundColor3 = Color3.fromRGB(220, 20, 60) -- Crimson
+closeButton.Text = "Close"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 22
+closeButton.Parent = screenGui -- Add the close button outside the main frame
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 10)
+closeCorner.Parent = closeButton
+
+-- Create the open button (initially visible) with rounded corners
+local openButton = Instance.new("TextButton")
+openButton.Size = UDim2.new(0, 100, 0, 40)
+openButton.Position = UDim2.new(0, 10, 1, -40)
+openButton.AnchorPoint = Vector2.new(0, 1)
+openButton.BackgroundColor3 = Color3.fromRGB(60, 179, 113) -- Medium Sea Green
+openButton.Text = "Open"
+openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+openButton.Font = Enum.Font.SourceSansBold
+openButton.TextSize = 22
+openButton.Parent = screenGui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(0, 10)
+openCorner.Parent = openButton
+
+-- Close button functionality
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    openButton.Visible = true
+    closeButton.Visible = false
+end)
+
+-- Open button functionality
+openButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    openButton.Visible = false
+    closeButton.Visible = true
+end)
+
+-- ESP functionality
+local espEnabled = false
+
+local function createESP(character)
+    if character and character ~= LocalPlayer.Character then
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart and not character:FindFirstChild("PlayerESP") then
+            local esp = Instance.new("Highlight")
+            esp.Name = "PlayerESP"
+            esp.Adornee = character
+            esp.Parent = character
+        end
+    end
+end
+
+local function removeESP(character)
+    if character and character ~= LocalPlayer.Character then
+        local esp = character:FindFirstChild("PlayerESP")
+        if esp then
+            esp:Destroy()
+        end
+    end
+end
+
+local function updateESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character then
+            if espEnabled then
+                createESP(character)
+            else
+                removeESP(character)
+            end
+        end
+    end
+end
+
+local function espAllPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        player.CharacterAdded:Connect(function(character)
+            if espEnabled then
+                createESP(character)
+            else
+                removeESP(character)
+            end
+        end)
+        
+        if player.Character then
+            if espEnabled then
+                createESP(player.Character)
+            else
+                removeESP(player.Character)
+            end
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        if espEnabled then
+            createESP(character)
+        else
+            removeESP(character)
+        end
+    end)
+end)
+
+toggleButtonESP.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    updateESP()
+    if espEnabled then
+        toggleButtonESP.Text = "Disable ESP"
+    else
+        toggleButtonESP.Text = "Enable ESP"
+    end
+end)
+
+espAllPlayers()
+
+-- Aimlock and FOV functionality
+local aimlockEnabled = false
+local fovEnabled = false
+local guiVisible = true
+local rightMouseDown = false
+local fovSize = 200
+local fovCircle = Drawing.new("Circle")
+fovCircle.Thickness = 2
+fovCircle.NumSides = 30
+fovCircle.Radius = fovSize
+fovCircle.Filled = false
+fovCircle.Transparency = 1
+fovCircle.Color = Color3.fromRGB(255, 0, 0)
+fovCircle.Visible = false
+
+local targetPart = "Head"
+
+local function updateFovCircle()
+    fovCircle.Position = Vector2.new(Workspace.CurrentCamera.ViewportSize.X / 2, Workspace.CurrentCamera.ViewportSize.Y / 2)
+end
+
+local function isWithinFOV(target)
+    local camera = Workspace.CurrentCamera
+    local screenPoint = camera:WorldToViewportPoint(target.Position)
+    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)).Magnitude
+    return distance <= fovSize
+end
+
+local function getAimedPlayer()
+    local camera = Workspace.CurrentCamera
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(targetPart) then
+            local part = player.Character[targetPart]
+            if isWithinFOV(part) then
+                return player
+            end
+        end
+    end
+    return nil
+end
+
+local function aimAt(target)
+    if target and target.Character and target.Character:FindFirstChild(targetPart) then
+        local targetPosition = target.Character[targetPart].Position
+        local camera = Workspace.CurrentCamera
+        camera.CFrame = CFrame.new(camera.CFrame.Position, targetPosition)
+    end
+end
+
+local function aimlock()
+    if aimlockEnabled and rightMouseDown and not guiVisible then
+        local target = getAimedPlayer()
+        if target then
+            aimAt(target)
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if aimlockEnabled and not guiVisible then
+        aimlock()
+    end
+    if fovEnabled then
+        updateFovCircle()
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        rightMouseDown = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        rightMouseDown = false
+    end
+end)
+
+toggleButtonAimlock.MouseButton1Click:Connect(function()
+    aimlockEnabled = not aimlockEnabled
+    if aimlockEnabled then
+        toggleButtonAimlock.Text = "Disable Aimlock"
+    else
+        toggleButtonAimlock.Text = "Enable Aimlock"
+    end
+end)
+
+toggleButtonFOV.MouseButton1Click:Connect(function()
+    fovEnabled = not fovEnabled
+    fovCircle.Visible = fovEnabled
+    if fovEnabled then
+        toggleButtonFOV.Text = "Disable FOV"
+    else
+        toggleButtonFOV.Text = "Enable FOV"
+    end
+end)
+
+setFovSizeButton.MouseButton1Click:Connect(function()
+    local size = tonumber(fovSizeInput.Text)
+    if size and size > 0 then
+        fovSize = size
+        fovCircle.Radius = fovSize
+    else
+        fovSizeInput.Text = tostring(fovSize)
+    end
+end)
+
+-- Update GUI visibility state
+mainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+    guiVisible = mainFrame.Visible
+end)
+
+-- Infinite Jump functionality
+local infiniteJumpEnabled = false
+
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+local toggleButtonInfiniteJump = Instance.new("TextButton")
+toggleButtonInfiniteJump.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonInfiniteJump.Position = UDim2.new(0, 10, 0, 70)
+toggleButtonInfiniteJump.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonInfiniteJump.Text = "Enable Infinite Jump"
+toggleButtonInfiniteJump.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonInfiniteJump.Font = Enum.Font.SourceSansBold
+toggleButtonInfiniteJump.TextSize = 22
+toggleButtonInfiniteJump.Parent = playerSection
+
+local infiniteJumpCorner = Instance.new("UICorner")
+infiniteJumpCorner.CornerRadius = UDim.new(0, 10)
+infiniteJumpCorner.Parent = toggleButtonInfiniteJump
+
+toggleButtonInfiniteJump.MouseButton1Click:Connect(function()
+    infiniteJumpEnabled = not infiniteJumpEnabled
+    if infiniteJumpEnabled then
+        toggleButtonInfiniteJump.Text = "Disable Infinite Jump"
+    else
+        toggleButtonInfiniteJump.Text = "Enable Infinite Jump"
+    end
+end)
+
+-- God Mode functionality
+local godModeEnabled = false
+
+local function enableGodMode()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MaxHealth = math.huge
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = math.huge
+    end
+end
+
+local function disableGodMode()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MaxHealth = 100
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 100
+    end
+end
+
+local toggleButtonGodMode = Instance.new("TextButton")
+toggleButtonGodMode.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonGodMode.Position = UDim2.new(0, 10, 0, 120)
+toggleButtonGodMode.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonGodMode.Text = "Enable God Mode"
+toggleButtonGodMode.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonGodMode.Font = Enum.Font.SourceSansBold
+toggleButtonGodMode.TextSize = 22
+toggleButtonGodMode.Parent = playerSection
+
+local godModeCorner = Instance.new("UICorner")
+godModeCorner.CornerRadius = UDim.new(0, 10)
+godModeCorner.Parent = toggleButtonGodMode
+
+toggleButtonGodMode.MouseButton1Click:Connect(function()
+    godModeEnabled = not godModeEnabled
+    if godModeEnabled then
+        enableGodMode()
+        toggleButtonGodMode.Text = "Disable God Mode"
+    else
+        disableGodMode()
+        toggleButtonGodMode.Text = "Enable God Mode"
+    end
+end)
+
+-- Continuously set health to max if God Mode is enabled
+RunService.RenderStepped:Connect(function()
+    if godModeEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MaxHealth
+    end
+end)
+
+-- Set player walk speed inside playerSection with rounded corners
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, -20, 0, 35)
+speedLabel.Position = UDim2.new(0, 10, 0, 170)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Text = "Set Player Speed"
+speedLabel.TextColor3 = Color3.fromRGB(50, 50, 50)
+speedLabel.Font = Enum.Font.SourceSansBold
+speedLabel.TextSize = 22
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Parent = playerSection
+
+local speedInput = Instance.new("TextBox")
+speedInput.Size = UDim2.new(0, 170, 0, 40)
+speedInput.Position = UDim2.new(0, 10, 0, 215)
+speedInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+speedInput.Text = "16"
+speedInput.TextColor3 = Color3.fromRGB(50, 50, 50)
+speedInput.Font = Enum.Font.SourceSansBold
+speedInput.TextSize = 22
+speedInput.Parent = playerSection
+
+local speedInputCorner = Instance.new("UICorner")
+speedInputCorner.CornerRadius = UDim.new(0, 10)
+speedInputCorner.Parent = speedInput
+
+local setSpeedButton = Instance.new("TextButton")
+setSpeedButton.Size = UDim2.new(0, 170, 0, 40)
+setSpeedButton.Position = UDim2.new(0, 190, 0, 215)
+setSpeedButton.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+setSpeedButton.Text = "Set Speed"
+setSpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+setSpeedButton.Font = Enum.Font.SourceSansBold
+setSpeedButton.TextSize = 22
+setSpeedButton.Parent = playerSection
+
+local setSpeedCorner = Instance.new("UICorner")
+setSpeedCorner.CornerRadius = UDim.new(0, 10)
+setSpeedCorner.Parent = setSpeedButton
+
+setSpeedButton.MouseButton1Click:Connect(function()
+    local speed = tonumber(speedInput.Text)
+    if speed and speed >= 0 and speed <= 5000 then
+        LocalPlayer.Character.Humanoid.WalkSpeed = speed
+    else
+        speedInput.Text = "16"
+    end
+end)
+
+-- Initial setup
+showSection(mainSection)
+updateESP()
