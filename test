@@ -359,8 +359,12 @@ end)
 local espEnabled = false
 local espInstances = {}
 
+local function isEnemy(player)
+    return player.Team ~= LocalPlayer.Team
+end
+
 local function createESP(character)
-    if character and character ~= LocalPlayer.Character then
+    if character and character ~= LocalPlayer.Character and isEnemy(Players:GetPlayerFromCharacter(character)) then
         local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
         local head = character:FindFirstChild("Head")
         if humanoidRootPart and not character:FindFirstChild("PlayerESP") then
@@ -371,7 +375,7 @@ local function createESP(character)
             box.ZIndex = 5
             box.Size = Vector3.new(4, 6, 4)
             box.Transparency = 0.5
-            box.Color3 = Color3.fromRGB(255, 0, 0)
+            box.Color3 = Color3.fromRGB(255, 0, 0) -- Red for enemies
             box.Parent = humanoidRootPart
             table.insert(espInstances, box)
             
@@ -388,8 +392,8 @@ local function createESP(character)
                 nameLabel.BackgroundTransparency = 1
                 nameLabel.Text = character.Name
                 nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                nameLabel.Font = Enum.Font.SourceSansBold
-                nameLabel.TextSize = 14
+                nameLabel.Font = Enum.Font.GothamBold
+                nameLabel.TextSize = 18
                 nameLabel.Parent = billboardGui
 
                 billboardGui.Parent = head
@@ -471,6 +475,12 @@ toggleButtonESP.MouseButton1Click:Connect(function()
     end
 end)
 
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        updateESP()
+    end
+end)
+
 espAllPlayers()
 
 -- Aimlock and FOV functionality
@@ -504,7 +514,7 @@ end
 local function getAimedPlayer()
     local camera = Workspace.CurrentCamera
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(targetPart) then
+        if player ~= LocalPlayer and isEnemy(player) and player.Character and player.Character:FindFirstChild(targetPart) then
             local part = player.Character[targetPart]
             if isWithinFOV(part) then
                 return player
@@ -725,4 +735,47 @@ UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Insert then
         mainFrame.Visible = not mainFrame.Visible
     end
+end)
+
+-- Function to update player nametags
+local function updatePlayerNametags()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character and character:FindFirstChild("Head") then
+            local head = character.Head
+            if not head:FindFirstChild("PlayerNametag") then
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = "PlayerNametag"
+                billboardGui.Adornee = head
+                billboardGui.Size = UDim2.new(0, 100, 0, 100)
+                billboardGui.StudsOffset = Vector3.new(0, 2, 0)
+                billboardGui.AlwaysOnTop = true
+
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Size = UDim2.new(1, 0, 1, 0)
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.Text = player.Name
+                nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                nameLabel.Font = Enum.Font.GothamBold
+                nameLabel.TextSize = 18
+                nameLabel.Parent = billboardGui
+
+                billboardGui.Parent = head
+            end
+        end
+    end
+end
+
+-- Call the function to update player nametags initially
+updatePlayerNametags()
+
+-- Update player nametags whenever a player spawns or respawns
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        updatePlayerNametags()
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function()
+    updatePlayerNametags()
 end)
