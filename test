@@ -82,7 +82,7 @@ topBar.InputChanged:Connect(function(input)
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         local delta = input.Position - mousePos
         mainFrame.Position = UDim2.new(
@@ -357,6 +357,7 @@ end)
 
 -- ESP functionality using BoxHandleAdornment and Nametags
 local espEnabled = false
+local nametagsEnabled = false
 local espInstances = {}
 
 local function isEnemy(player)
@@ -379,7 +380,7 @@ local function createESP(character)
             box.Parent = humanoidRootPart
             table.insert(espInstances, box)
             
-            if head then
+            if head and nametagsEnabled then
                 local billboardGui = Instance.new("BillboardGui")
                 billboardGui.Name = "PlayerNametag"
                 billboardGui.Adornee = head
@@ -415,7 +416,14 @@ local function removeESP(character)
     end
 end
 
+local espDebounce = false
+local espUpdateInterval = 0.5 -- Update every 0.5 seconds
+local lastESPUpdate = 0
+
 local function updateESP()
+    if espDebounce then return end
+    espDebounce = true
+
     for _, esp in ipairs(espInstances) do
         if esp and esp.Parent then
             esp:Destroy()
@@ -433,6 +441,8 @@ local function updateESP()
             end
         end
     end
+
+    espDebounce = false
 end
 
 local function espAllPlayers()
@@ -475,9 +485,13 @@ toggleButtonESP.MouseButton1Click:Connect(function()
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-    if espEnabled then
-        updateESP()
+RunService.Heartbeat:Connect(function(deltaTime)
+    lastESPUpdate = lastESPUpdate + deltaTime
+    if lastESPUpdate >= espUpdateInterval then
+        lastESPUpdate = 0
+        if espEnabled then
+            updateESP()
+        end
     end
 end)
 
@@ -723,6 +737,31 @@ setSpeedButton.MouseButton1Click:Connect(function()
         LocalPlayer.Character.Humanoid.WalkSpeed = speed
     else
         speedInput.Text = "16"
+    end
+end)
+
+-- Create the toggle button for Nametags inside mainSection with rounded corners
+local toggleButtonNametags = Instance.new("TextButton")
+toggleButtonNametags.Size = UDim2.new(0, 170, 0, 40)
+toggleButtonNametags.Position = UDim2.new(0, 10, 0, 320)
+toggleButtonNametags.BackgroundColor3 = Color3.fromRGB(100, 149, 237) -- Cornflower Blue
+toggleButtonNametags.Text = "Enable Nametags"
+toggleButtonNametags.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButtonNametags.Font = Enum.Font.SourceSansBold
+toggleButtonNametags.TextSize = 22
+toggleButtonNametags.Parent = mainSection
+
+local nametagsCorner = Instance.new("UICorner")
+nametagsCorner.CornerRadius = UDim.new(0, 10)
+nametagsCorner.Parent = toggleButtonNametags
+
+toggleButtonNametags.MouseButton1Click:Connect(function()
+    nametagsEnabled = not nametagsEnabled
+    updateESP()
+    if nametagsEnabled then
+        toggleButtonNametags.Text = "Disable Nametags"
+    else
+        toggleButtonNametags.Text = "Enable Nametags"
     end
 end)
 
